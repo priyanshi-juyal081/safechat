@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Video, Send, AlertTriangle, Ban, Eye, Users, MessageSquare, Radio, Wifi, WifiOff, Mic, MicOff } from 'lucide-react';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
+import Login from "./login";
 
 const SocialModerationPlatform = () => {
   const [user, setUser] = useState(null);
@@ -15,7 +16,7 @@ const SocialModerationPlatform = () => {
   const [warnings, setWarnings] = useState({});
   const [restrictedUsers, setRestrictedUsers] = useState(new Set());
   const [wsConnected, setWsConnected] = useState(false);
-  
+
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -41,12 +42,12 @@ const SocialModerationPlatform = () => {
 
     const connectWebSocket = () => {
       const ws = new WebSocket('ws://localhost:8000/ws/chat/');
-      
+
       ws.onopen = () => {
         console.log('WebSocket connected');
         setWsConnected(true);
       };
-      
+
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log('WebSocket message:', data);
@@ -99,19 +100,19 @@ const SocialModerationPlatform = () => {
           alert(data.message);
         }
       };
-      
+
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         setWsConnected(false);
       };
-      
+
       ws.onclose = () => {
         console.log('WebSocket disconnected');
         setWsConnected(false);
         // Reconnect after 3 seconds
         setTimeout(connectWebSocket, 3000);
       };
-      
+
       wsRef.current = ws;
     };
 
@@ -130,11 +131,11 @@ const SocialModerationPlatform = () => {
 
     const connectStreamWebSocket = () => {
       const ws = new WebSocket(`ws://localhost:8000/ws/chat/${currentStream.id}/`);
-      
+
       ws.onopen = () => {
         console.log('Stream WebSocket connected');
       };
-      
+
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
@@ -185,15 +186,15 @@ const SocialModerationPlatform = () => {
           alert(data.message);
         }
       };
-      
+
       ws.onerror = (error) => {
         console.error('Stream WebSocket error:', error);
       };
-      
+
       ws.onclose = () => {
         console.log('Stream WebSocket disconnected');
       };
-      
+
       streamWsRef.current = ws;
     };
 
@@ -303,7 +304,7 @@ const SocialModerationPlatform = () => {
       }
 
       streamRef.current = stream;
-      
+
       const newStream = {
         id: Date.now(),
         streamerId: user.id,
@@ -365,7 +366,7 @@ const SocialModerationPlatform = () => {
     }
 
     if (currentStream) {
-      setLiveStreams(prev => 
+      setLiveStreams(prev =>
         prev.map(s => s.id === currentStream.id ? { ...s, isLive: false } : s)
       );
     }
@@ -376,7 +377,7 @@ const SocialModerationPlatform = () => {
     if (videoRef.current) {
       try {
         videoRef.current.srcObject = null;
-      } catch (e) {}
+      } catch (e) { }
     }
   };
 
@@ -417,10 +418,10 @@ const SocialModerationPlatform = () => {
     setMessages(prev =>
       prev.map(msg => msg.id === messageId ? { ...msg, flagged: true } : msg)
     );
-    
+
     const userWarnings = warnings[userId] || 0;
     setWarnings(prev => ({ ...prev, [userId]: userWarnings + 1 }));
-    
+
     if (userWarnings + 1 >= 3) {
       setRestrictedUsers(prev => new Set([...prev, userId]));
     }
@@ -455,42 +456,9 @@ const SocialModerationPlatform = () => {
     : (speechWarnings || 0);
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="inline-block p-3 bg-purple-100 rounded-full mb-4">
-              <Users className="w-12 h-12 text-purple-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">SafeChat</h1>
-            <p className="text-gray-600">AI-Powered Real-Time Social Platform</p>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Choose a username
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyPress={(e) => handleKeyPress(e, handleLogin)}
-                placeholder="Enter username"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-            <button
-              onClick={handleLogin}
-              className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition"
-            >
-              Join Platform
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <Login onLogin={setUser} />;
   }
+
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -515,7 +483,7 @@ const SocialModerationPlatform = () => {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600">
               Welcome, <span className="font-semibold">{user.username}</span>
@@ -564,27 +532,24 @@ const SocialModerationPlatform = () => {
             <div className="space-y-2">
               <button
                 onClick={() => setActiveTab('chat')}
-                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition ${
-                  activeTab === 'chat' ? 'bg-purple-100 text-purple-700' : 'hover:bg-gray-100'
-                }`}
+                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition ${activeTab === 'chat' ? 'bg-purple-100 text-purple-700' : 'hover:bg-gray-100'
+                  }`}
               >
                 <MessageSquare className="w-4 h-4" />
                 <span>Global Chat</span>
               </button>
               <button
                 onClick={() => setActiveTab('streams')}
-                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition ${
-                  activeTab === 'streams' ? 'bg-purple-100 text-purple-700' : 'hover:bg-gray-100'
-                }`}
+                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition ${activeTab === 'streams' ? 'bg-purple-100 text-purple-700' : 'hover:bg-gray-100'
+                  }`}
               >
                 <Video className="w-4 h-4" />
                 <span>Live Streams</span>
               </button>
               <button
                 onClick={() => setActiveTab('golive')}
-                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition ${
-                  activeTab === 'golive' ? 'bg-purple-100 text-purple-700' : 'hover:bg-gray-100'
-                }`}
+                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition ${activeTab === 'golive' ? 'bg-purple-100 text-purple-700' : 'hover:bg-gray-100'
+                  }`}
               >
                 <Radio className="w-4 h-4" />
                 <span>Go Live</span>
@@ -696,7 +661,7 @@ const SocialModerationPlatform = () => {
           {activeTab === 'golive' && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-6">Start Live Stream</h2>
-              
+
               {!isStreaming ? (
                 <div className="space-y-4">
                   <div>
@@ -711,7 +676,7 @@ const SocialModerationPlatform = () => {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   </div>
-                  
+
                   <button
                     onClick={handleStartStream}
                     className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition flex items-center justify-center space-x-2"
@@ -731,7 +696,7 @@ const SocialModerationPlatform = () => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
@@ -857,7 +822,7 @@ const SocialModerationPlatform = () => {
           {activeTab === 'streams' && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-6">Live Streams</h2>
-              
+
               {liveStreams.filter(s => s.isLive).length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
